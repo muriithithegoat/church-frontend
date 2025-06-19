@@ -1,68 +1,109 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-function AddMember() {
-  const [formData, setFormData] = useState({
-    fullName: '',
-    baptismDate: ''
-  });
+const AddMember = () => {
+  const [fullName, setFullName] = useState('');
+  const [baptismDate, setBaptismDate] = useState('');
+  const [isMarried, setIsMarried] = useState(false);
+  const [spouseId, setSpouseId] = useState('');
+  const [marriageDate, setMarriageDate] = useState('');
+  const [members, setMembers] = useState([]);
 
-  const [message, setMessage] = useState('');
-
-  const handleChange = (e) => {
-    setFormData(prev => ({
-      ...prev,
-      [e.target.name]: e.target.value
-    }));
-  };
+  useEffect(() => {
+    // Fetch members to populate spouse options
+    axios.get('http://localhost:5000/api/members')
+      .then(res => setMembers(res.data))
+      .catch(err => console.error('Failed to load members', err));
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const newMember = {
+      fullName,
+      baptismDate,
+      matrimony: {
+        isMarried,
+        spouseId: isMarried ? spouseId : null,
+        marriageDate: isMarried ? marriageDate : null
+      }
+    };
+
     try {
-      const res = await axios.post('http://localhost:5000/api/members', formData);
-      setMessage('✅ Member added: ' + res.data.fullName);
-      setFormData({ fullName: '', baptismDate: '' });
-    } catch (err) {
-      console.error(err);
-      setMessage('❌ Failed to add member');
+      await axios.post('http://localhost:5000/api/members', newMember);
+      alert('Member added successfully!');
+      // Optionally reset form
+      setFullName('');
+      setBaptismDate('');
+      setIsMarried(false);
+      setSpouseId('');
+      setMarriageDate('');
+    } catch (error) {
+      console.error('Error adding member:', error);
+      alert('Failed to add member');
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
-      <div className="bg-white shadow-xl rounded-2xl p-6 w-full max-w-md">
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">Add Member</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Full Name</label>
-            <input
-              type="text"
-              name="fullName"
-              value={formData.fullName}
-              onChange={handleChange}
+    <div className="max-w-md mx-auto mt-10 p-6 border rounded-lg bg-white shadow-md">
+      <h2 className="text-2xl font-bold mb-6">Add New Member</h2>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <input
+          type="text"
+          placeholder="Full Name"
+          className="w-full p-2 border rounded"
+          value={fullName}
+          onChange={(e) => setFullName(e.target.value)}
+          required
+        />
+        <input
+          type="date"
+          className="w-full p-2 border rounded"
+          value={baptismDate}
+          onChange={(e) => setBaptismDate(e.target.value)}
+          required
+        />
+        <div className="flex items-center space-x-2">
+          <input
+            type="checkbox"
+            checked={isMarried}
+            onChange={(e) => setIsMarried(e.target.checked)}
+          />
+          <label>Married</label>
+        </div>
+        {isMarried && (
+          <>
+            <select
+              className="w-full p-2 border rounded"
+              value={spouseId}
+              onChange={(e) => setSpouseId(e.target.value)}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring focus:ring-blue-400"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Baptism Date</label>
+            >
+              <option value="">Select Spouse</option>
+              {members.map((member) => (
+                <option key={member._id} value={member._id}>
+                  {member.fullName}
+                </option>
+              ))}
+            </select>
             <input
               type="date"
-              name="baptismDate"
-              value={formData.baptismDate}
-              onChange={handleChange}
+              className="w-full p-2 border rounded"
+              value={marriageDate}
+              onChange={(e) => setMarriageDate(e.target.value)}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring focus:ring-blue-400"
             />
-          </div>
-          <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition">
-            Add Member
-          </button>
-        </form>
-        {message && <p className="mt-4 text-sm text-center">{message}</p>}
-      </div>
+          </>
+        )}
+        <button
+          type="submit"
+          className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition"
+        >
+          Add Member
+        </button>
+      </form>
     </div>
   );
-}
+};
 
 export default AddMember;
