@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 
 const Register = () => {
   const [form, setForm] = useState({ name: '', email: '', password: '' });
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -30,6 +32,7 @@ const Register = () => {
       >
         <h2 className="text-2xl font-bold text-center">Register</h2>
         {error && <p className="text-red-500 text-sm text-center">{error}</p>}
+
         <input
           type="text"
           name="name"
@@ -48,15 +51,39 @@ const Register = () => {
           onChange={handleChange}
           required
         />
-        <input
-          type="password"
-          name="password"
-          placeholder="Password"
-          className="w-full p-2 border rounded"
-          value={form.password}
-          onChange={handleChange}
-          required
-        />
+
+        <div className="relative">
+          <input
+            type={showPassword ? 'text' : 'password'}
+            name="password"
+            placeholder="Password"
+            className="w-full p-2 border rounded pr-10"
+            value={form.password}
+            onChange={handleChange}
+            required
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-2 top-2 text-gray-600"
+          >
+            {showPassword ? (
+              <EyeSlashIcon className="h-5 w-5" />
+            ) : (
+              <EyeIcon className="h-5 w-5" />
+            )}
+          </button>
+        </div>
+
+        <div className="flex justify-between text-sm text-blue-600">
+          <Link to="/login" className="hover:underline">
+            Already have an account?
+          </Link>
+          <Link to="/forgot-password" className="hover:underline">
+            Forgot password?
+          </Link>
+        </div>
+
         <button
           type="submit"
           className="w-full bg-green-600 text-white p-2 rounded hover:bg-green-700 transition"

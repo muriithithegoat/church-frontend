@@ -8,6 +8,7 @@ import EditMember from './components/EditMember';
 import Dashboard from './components/Dashboard';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import ForgotPassword from './pages/ForgotPassword';
 
 const App = () => {
   return (
@@ -15,6 +16,7 @@ const App = () => {
        <Navbar />
       <div className="p-4"></div>
       <Routes>
+        <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/" element={<Layout />}>
