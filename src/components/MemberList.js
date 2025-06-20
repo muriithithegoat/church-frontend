@@ -1,21 +1,29 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
+import {
+  PencilIcon,
+  TrashIcon,
+  PlusIcon,
+  MagnifyingGlassIcon,
+} from '@heroicons/react/24/outline';
 
 const MemberList = () => {
   const [members, setMembers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-
-  const fetchMembers = async () => {
-    try {
-      const res = await axios.get('http://localhost:5000/api/members');
-      setMembers(res.data);
-    } catch (err) {
-      console.error('Error fetching members:', err);
-    }
-  };
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const fetchMembers = async () => {
+      try {
+        const res = await axios.get('http://localhost:5000/api/members');
+        setMembers(res.data);
+        setLoading(false);
+      } catch (err) {
+        console.error('Error fetching members:', err);
+        setLoading(false);
+      }
+    };
     fetchMembers();
   }, []);
 
@@ -34,30 +42,32 @@ const MemberList = () => {
   );
 
   return (
-    <div className="p-6 bg-white rounded-lg shadow-md">
-      <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
-        <h2 className="text-3xl font-semibold text-gray-800">Church Members</h2>
+    <div className="p-6 space-y-6">
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+        <h1 className="text-3xl font-bold text-gray-800 dark:text-white">Church Members</h1>
         <Link
           to="/add"
-          className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg transition duration-200"
+          className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow transition"
         >
-          + Add Member
+          <PlusIcon className="h-5 w-5" />
+          Add Member
         </Link>
       </div>
 
-      <div className="mb-4">
+      <div className="relative w-full md:w-1/2">
+        <MagnifyingGlassIcon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
         <input
           type="text"
-          placeholder="Search members by name..."
+          placeholder="Search by full name..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-900 dark:text-white"
         />
       </div>
 
-      <div className="overflow-auto rounded-lg border border-gray-200 shadow-sm">
-        <table className="w-full text-sm text-gray-700">
-          <thead className="bg-gray-100 text-left text-gray-600 uppercase text-xs">
+      <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+        <table className="w-full min-w-[600px] text-sm text-gray-700 dark:text-gray-200">
+          <thead className="bg-gray-100 dark:bg-gray-800 text-left text-xs uppercase text-gray-600 dark:text-gray-400">
             <tr>
               <th className="p-4">Full Name</th>
               <th className="p-4">Baptism Date</th>
@@ -67,32 +77,38 @@ const MemberList = () => {
             </tr>
           </thead>
           <tbody>
-            {filteredMembers.length > 0 ? (
+            {loading ? (
+              <tr>
+                <td colSpan="5" className="text-center py-6">
+                  <span className="animate-pulse text-gray-500 dark:text-gray-400">Loading members...</span>
+                </td>
+              </tr>
+            ) : filteredMembers.length > 0 ? (
               filteredMembers.map((member) => (
-                <tr key={member._id} className="hover:bg-gray-50 transition">
+                <tr key={member._id} className="hover:bg-gray-50 dark:hover:bg-gray-800 transition">
                   <td className="p-4">{member.fullName}</td>
                   <td className="p-4">
                     {member.baptismDate
                       ? new Date(member.baptismDate).toLocaleDateString()
                       : '—'}
                   </td>
-                  <td className="p-4">
-                    {member.matrimony?.isMarried ? 'Yes' : 'No'}
-                  </td>
+                  <td className="p-4">{member.matrimony?.isMarried ? 'Yes' : 'No'}</td>
                   <td className="p-4">
                     {member.matrimony?.spouseId?.fullName || '—'}
                   </td>
                   <td className="p-4 text-center space-x-2">
                     <Link
                       to={`/edit/${member._id}`}
-                      className="inline-block px-3 py-1 text-sm text-white bg-green-600 hover:bg-green-700 rounded-md"
+                      className="inline-flex items-center px-3 py-1 text-sm text-white bg-green-600 hover:bg-green-700 rounded-md transition"
                     >
+                      <PencilIcon className="h-4 w-4 mr-1" />
                       Edit
                     </Link>
                     <button
                       onClick={() => handleDelete(member._id)}
-                      className="inline-block px-3 py-1 text-sm text-white bg-red-500 hover:bg-red-600 rounded-md"
+                      className="inline-flex items-center px-3 py-1 text-sm text-white bg-red-500 hover:bg-red-600 rounded-md transition"
                     >
+                      <TrashIcon className="h-4 w-4 mr-1" />
                       Delete
                     </button>
                   </td>
@@ -100,7 +116,7 @@ const MemberList = () => {
               ))
             ) : (
               <tr>
-                <td colSpan="5" className="text-center p-6 text-gray-400">
+                <td colSpan="5" className="text-center py-6 text-gray-400 dark:text-gray-500">
                   No members found.
                 </td>
               </tr>

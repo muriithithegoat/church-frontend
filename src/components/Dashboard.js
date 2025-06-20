@@ -14,11 +14,11 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/members/stats');
+        const res = await axios.get('http://localhost:5000/api/members/stats/summary');
         setStats(res.data);
-        setLoading(false);
       } catch (err) {
         console.error('Failed to fetch stats:', err);
+      } finally {
         setLoading(false);
       }
     };
