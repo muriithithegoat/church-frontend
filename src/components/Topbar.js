@@ -1,14 +1,17 @@
-// src/components/Topbar.js
 import React from 'react';
 
 const Topbar = () => {
   return (
-    <div className="bg-white shadow-md p-4 flex justify-between items-center">
-      <h2 className="text-xl font-semibold">Dashboard</h2>
-      <div>
-        {/* Add a search bar or user icon here later */}
+    <header className="bg-white shadow px-6 py-3 flex justify-end items-center">
+      <div className="flex items-center gap-3">
+        <span className="text-sm font-medium">Admin</span>
+        <img
+          src="https://ui-avatars.com/api/?name=Admin"
+          alt="profile"
+          className="w-8 h-8 rounded-full"
+        />
       </div>
-    </div>
+    </header>
   );
 };
 

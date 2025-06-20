@@ -1,33 +1,30 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { HomeIcon, UserPlusIcon, UsersIcon } from '@heroicons/react/24/solid';
 
 const Sidebar = () => {
   const { pathname } = useLocation();
 
-  const navItems = [
-    { name: 'Dashboard', path: '/' },
-    { name: 'Members', path: '/members' },
-    { name: 'Add Member', path: '/add-member' },
-  ];
+  const linkClasses = (path) =>
+    `flex items-center gap-3 px-4 py-2 rounded hover:bg-gray-200 ${
+      pathname === path ? 'bg-gray-300 font-semibold' : ''
+    }`;
 
   return (
-    <div className="w-64 bg-white shadow-md h-screen sticky top-0 p-5">
-      <h1 className="text-2xl font-bold mb-8">Church Admin</h1>
-      <ul className="space-y-4">
-        {navItems.map((item) => (
-          <li key={item.name}>
-            <Link
-              to={item.path}
-              className={`block px-4 py-2 rounded hover:bg-blue-100 ${
-                pathname === item.path ? 'bg-blue-200 font-semibold' : ''
-              }`}
-            >
-              {item.name}
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </div>
+    <aside className="w-64 h-full bg-gray-100 border-r p-4">
+      <h1 className="text-2xl font-bold mb-8">ChurchCMS</h1>
+      <nav className="flex flex-col space-y-2">
+        <Link to="/" className={linkClasses('/')}>
+          <HomeIcon className="h-5 w-5" /> Dashboard
+        </Link>
+        <Link to="/members" className={linkClasses('/members')}>
+          <UsersIcon className="h-5 w-5" /> Members
+        </Link>
+        <Link to="/add" className={linkClasses('/add')}>
+          <UserPlusIcon className="h-5 w-5" /> Add Member
+        </Link>
+      </nav>
+    </aside>
   );
 };
 

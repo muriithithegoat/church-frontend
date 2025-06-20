@@ -4,17 +4,14 @@ import { Link } from 'react-router-dom';
 
 const MemberList = () => {
   const [members, setMembers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
 
   const fetchMembers = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/members');
-      setMembers(response.data);
-      setLoading(false);
+      const res = await axios.get('http://localhost:5000/api/members');
+      setMembers(res.data);
     } catch (err) {
-      setError('Failed to fetch members');
-      setLoading(false);
+      console.error('Error fetching members:', err);
     }
   };
 
@@ -23,61 +20,94 @@ const MemberList = () => {
   }, []);
 
   const handleDelete = async (id) => {
-    const confirm = window.confirm("Are you sure you want to delete this member?");
-    if (!confirm) return;
-
+    if (!window.confirm('Are you sure you want to delete this member?')) return;
     try {
       await axios.delete(`http://localhost:5000/api/members/${id}`);
-      setMembers(members.filter(member => member._id !== id));
-      alert('Member deleted successfully');
+      setMembers((prev) => prev.filter((member) => member._id !== id));
     } catch (err) {
-      alert('Failed to delete member');
+      console.error('Failed to delete member:', err);
     }
   };
 
-  if (loading) return <p className="text-center mt-8">Loading members...</p>;
-  if (error) return <p className="text-red-500 text-center mt-8">{error}</p>;
+  const filteredMembers = members.filter((member) =>
+    member.fullName.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
-    <div className="p-4">
-      <h2 className="text-2xl font-bold mb-4">All Members</h2>
-      <table className="w-full border-collapse border border-gray-300">
-        <thead>
-          <tr className="bg-gray-100">
-            <th className="border border-gray-300 p-2">Name</th>
-            <th className="border border-gray-300 p-2">Baptism Date</th>
-            <th className="border border-gray-300 p-2">Married</th>
-            <th className="border border-gray-300 p-2">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {members.map(member => (
-            <tr key={member._id}>
-              <td className="border border-gray-300 p-2">{member.fullName}</td>
-              <td className="border border-gray-300 p-2">
-                {member.baptismDate ? new Date(member.baptismDate).toLocaleDateString() : 'N/A'}
-              </td>
-              <td className="border border-gray-300 p-2">
-                {member.matrimony?.isMarried ? 'Yes' : 'No'}
-              </td>
-              <td className="border border-gray-300 p-2">
-                <Link
-                  to={`/edit/${member._id}`}
-                  className="bg-blue-500 hover:bg-blue-600 text-white py-1 px-3 rounded mr-2"
-                >
-                  Edit
-                </Link>
-                <button
-                  onClick={() => handleDelete(member._id)}
-                  className="bg-red-500 hover:bg-red-600 text-white py-1 px-3 rounded"
-                >
-                  Delete
-                </button>
-              </td>
+    <div className="p-6 bg-white rounded-lg shadow-md">
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
+        <h2 className="text-3xl font-semibold text-gray-800">Church Members</h2>
+        <Link
+          to="/add"
+          className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg transition duration-200"
+        >
+          + Add Member
+        </Link>
+      </div>
+
+      <div className="mb-4">
+        <input
+          type="text"
+          placeholder="Search members by name..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+        />
+      </div>
+
+      <div className="overflow-auto rounded-lg border border-gray-200 shadow-sm">
+        <table className="w-full text-sm text-gray-700">
+          <thead className="bg-gray-100 text-left text-gray-600 uppercase text-xs">
+            <tr>
+              <th className="p-4">Full Name</th>
+              <th className="p-4">Baptism Date</th>
+              <th className="p-4">Married</th>
+              <th className="p-4">Spouse</th>
+              <th className="p-4 text-center">Actions</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {filteredMembers.length > 0 ? (
+              filteredMembers.map((member) => (
+                <tr key={member._id} className="hover:bg-gray-50 transition">
+                  <td className="p-4">{member.fullName}</td>
+                  <td className="p-4">
+                    {member.baptismDate
+                      ? new Date(member.baptismDate).toLocaleDateString()
+                      : '—'}
+                  </td>
+                  <td className="p-4">
+                    {member.matrimony?.isMarried ? 'Yes' : 'No'}
+                  </td>
+                  <td className="p-4">
+                    {member.matrimony?.spouseId?.fullName || '—'}
+                  </td>
+                  <td className="p-4 text-center space-x-2">
+                    <Link
+                      to={`/edit/${member._id}`}
+                      className="inline-block px-3 py-1 text-sm text-white bg-green-600 hover:bg-green-700 rounded-md"
+                    >
+                      Edit
+                    </Link>
+                    <button
+                      onClick={() => handleDelete(member._id)}
+                      className="inline-block px-3 py-1 text-sm text-white bg-red-500 hover:bg-red-600 rounded-md"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="5" className="text-center p-6 text-gray-400">
+                  No members found.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };
