@@ -11,14 +11,16 @@ import {
 const Dashboard = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/members/stats/summary');
+        const res = await axios.get('/members/stats/summary');
         setStats(res.data);
       } catch (err) {
         console.error('Failed to fetch stats:', err);
+        setError('Failed to load dashboard data. Please try again.');
       } finally {
         setLoading(false);
       }
@@ -27,11 +29,19 @@ const Dashboard = () => {
     fetchStats();
   }, []);
 
-  if (loading || !stats) {
+  if (loading) {
     return (
       <div className="p-6">
         <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-6">Dashboard</h1>
         <p className="text-gray-500 animate-pulse">Loading stats...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6 text-center text-red-600 dark:text-red-400">
+        <h2 className="text-xl font-bold">🚨 {error}</h2>
       </div>
     );
   }

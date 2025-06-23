@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import axios from '../api/axiosInstance';
-
 import { Link } from 'react-router-dom';
 import {
   PencilIcon,
@@ -17,7 +16,7 @@ const MemberList = () => {
   useEffect(() => {
     const fetchMembers = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/members');
+        const res = await axios.get('/members'); // Auth header already included
         setMembers(res.data);
         setLoading(false);
       } catch (err) {
@@ -31,7 +30,7 @@ const MemberList = () => {
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this member?')) return;
     try {
-      await axios.delete(`http://localhost:5000/api/members/${id}`);
+      await axios.delete(`/members/${id}`);
       setMembers((prev) => prev.filter((member) => member._id !== id));
     } catch (err) {
       console.error('Failed to delete member:', err);
