@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import axios from '../api/axiosInstance';
-
 import { useNavigate, Link } from 'react-router-dom';
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 
 const Login = () => {
   const [form, setForm] = useState({ email: '', password: '' });
-  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [churchName, setChurchName] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -16,18 +16,21 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+    setChurchName('');
     try {
       const res = await axios.post('http://localhost:5000/api/auth/login', form);
-      const { token, user } = res.data;
+      const { user, token } = res.data;
 
-      // Save to localStorage
+      // Store token and user info in localStorage
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
 
-      navigate('/');
+      setChurchName(user.churchName); // show church name
+      setTimeout(() => navigate('/dashboard'), 1500);
     } catch (err) {
       console.error('Login failed:', err);
-      setError('Invalid email or password');
+      setError(err.response?.data?.message || 'Failed to login');
     }
   };
 
@@ -39,6 +42,11 @@ const Login = () => {
       >
         <h2 className="text-2xl font-bold text-center">Login</h2>
         {error && <p className="text-red-500 text-sm text-center">{error}</p>}
+        {churchName && (
+          <p className="text-green-600 text-sm text-center">
+            ✅ Logged into <strong>{churchName}</strong>
+          </p>
+        )}
 
         <input
           type="email"
@@ -65,17 +73,13 @@ const Login = () => {
             onClick={() => setShowPassword(!showPassword)}
             className="absolute right-2 top-2 text-gray-600"
           >
-            {showPassword ? (
-              <EyeSlashIcon className="h-5 w-5" />
-            ) : (
-              <EyeIcon className="h-5 w-5" />
-            )}
+            {showPassword ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
           </button>
         </div>
 
         <div className="flex justify-between text-sm text-blue-600">
           <Link to="/register" className="hover:underline">
-            New here? Register
+            Don't have an account?
           </Link>
           <Link to="/forgot-password" className="hover:underline">
             Forgot password?

@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import axios from '../api/axiosInstance';
-
 import { useNavigate, Link } from 'react-router-dom';
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 
 const Register = () => {
-  const [form, setForm] = useState({ name: '', email: '', password: '' });
+  const [form, setForm] = useState({ name: '', email: '', password: '', churchName: '' });
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
@@ -21,7 +20,7 @@ const Register = () => {
       navigate('/login');
     } catch (err) {
       console.error('Registration failed:', err);
-      setError('Failed to register user');
+      setError(err.response?.data?.message || 'Failed to register user');
     }
   };
 
@@ -49,6 +48,16 @@ const Register = () => {
           placeholder="Email"
           className="w-full p-2 border rounded"
           value={form.email}
+          onChange={handleChange}
+          required
+        />
+
+        <input
+          type="text"
+          name="churchName"
+          placeholder="Church Name"
+          className="w-full p-2 border rounded"
+          value={form.churchName}
           onChange={handleChange}
           required
         />
