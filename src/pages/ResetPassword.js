@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
 
@@ -10,6 +10,12 @@ const ResetPassword = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  useEffect(() => {
+    if (!token) {
+      setError('Invalid or missing reset token.');
+    }
+  }, [token]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -40,12 +46,14 @@ const ResetPassword = () => {
         <h2 className="text-2xl font-bold text-center">Reset Password</h2>
         {error && <p className="text-red-500 text-sm text-center">{error}</p>}
         {success && <p className="text-green-600 text-sm text-center">{success}</p>}
+
         <input
           type="password"
           placeholder="New password"
           className="w-full p-2 border rounded"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          disabled={!token}
         />
         <input
           type="password"
@@ -53,10 +61,12 @@ const ResetPassword = () => {
           className="w-full p-2 border rounded"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
+          disabled={!token}
         />
         <button
           type="submit"
           className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700 transition"
+          disabled={!token}
         >
           Reset Password
         </button>
