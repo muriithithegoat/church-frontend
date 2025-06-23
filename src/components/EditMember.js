@@ -2,152 +2,164 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from '../api/axiosInstance';
 
-
 const EditMember = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [member, setMember] = useState({
+
+  const [form, setForm] = useState({
     fullName: '',
     baptismDate: '',
-    matrimony: {
-      isMarried: false,
-      spouseId: ''
-    }
+    dateOfBirth: '',
+    groups: '',
+    isMarried: false,
+    spouseId: '',
+    marriageDate: '',
   });
+
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
+  // Fetch current member + other members
   useEffect(() => {
-    const fetchMember = async () => {
+    const fetchData = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/api/members/${id}`);
-        setMember(res.data);
+        const [memberRes, allMembersRes] = await Promise.all([
+          axios.get(`/members/${id}`),
+          axios.get('/members'),
+        ]);
+
+        const member = memberRes.data;
+
+        setForm({
+          fullName: member.fullName || '',
+          baptismDate: member.baptismDate?.split('T')[0] || '',
+          dateOfBirth: member.dateOfBirth?.split('T')[0] || '',
+          groups: member.groups ? member.groups.join(', ') : '',
+          isMarried: member.matrimony?.isMarried || false,
+          spouseId: member.matrimony?.spouseId?._id || '',
+          marriageDate: member.matrimony?.marriageDate?.split('T')[0] || '',
+        });
+
+        setMembers(allMembersRes.data.filter((m) => m._id !== id)); // exclude self
         setLoading(false);
       } catch (err) {
-        console.error('Failed to fetch member:', err);
+        console.error('Error loading data:', err);
+        setError('Failed to load member data');
+        setLoading(false);
       }
     };
 
-    const fetchAllMembers = async () => {
-      try {
-        const res = await axios.get('http://localhost:5000/api/members');
-        setMembers(res.data);
-      } catch (err) {
-        console.error('Failed to fetch members:', err);
-      }
-    };
-
-    fetchMember();
-    fetchAllMembers();
+    fetchData();
   }, [id]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-
-    if (name === 'isMarried') {
-      setMember((prev) => ({
-        ...prev,
-        matrimony: {
-          ...prev.matrimony,
-          isMarried: checked,
-        }
-      }));
-    } else if (name === 'spouseId') {
-      setMember((prev) => ({
-        ...prev,
-        matrimony: {
-          ...prev.matrimony,
-          spouseId: value,
-        }
-      }));
-    } else {
-      setMember((prev) => ({
-        ...prev,
-        [name]: value,
-      }));
-    }
+    setForm((prev) => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value,
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const updatedMember = {
+      fullName: form.fullName,
+      baptismDate: form.baptismDate || null,
+      dateOfBirth: form.dateOfBirth || null,
+      groups: form.groups.split(',').map((g) => g.trim()).filter((g) => g),
+      matrimony: {
+        isMarried: form.isMarried,
+        spouseId: form.isMarried ? form.spouseId : null,
+        marriageDate: form.isMarried ? form.marriageDate || null : null,
+      },
+    };
+
     try {
-      await axios.put(`http://localhost:5000/api/members/${id}`, member);
-      alert('Member updated!');
-      navigate('/');
+      await axios.put(`/members/${id}`, updatedMember);
+      navigate('/members');
     } catch (err) {
-      console.error('Failed to update member:', err);
-      alert('Failed to update member');
+      console.error('Error updating member:', err);
+      setError('Failed to update member');
     }
   };
 
   if (loading) {
-    return (
-      <div className="text-center mt-10 text-gray-500">Loading...</div>
-    );
+    return <p className="p-6 text-gray-600 dark:text-gray-300">Loading member...</p>;
   }
 
   return (
-    <div className="max-w-xl mx-auto p-6 bg-white shadow-md rounded-md">
-      <h2 className="text-xl font-semibold mb-4">Edit Member</h2>
+    <div className="max-w-2xl mx-auto mt-10 p-6 bg-white dark:bg-gray-800 rounded shadow">
+      <h2 className="text-2xl font-bold mb-6 text-gray-800 dark:text-white">Edit Member</h2>
+      {error && <p className="text-red-500 mb-4">{error}</p>}
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block mb-1 font-medium">Full Name</label>
-          <input
-            type="text"
-            name="fullName"
-            value={member.fullName}
-            onChange={handleChange}
-            className="w-full p-2 border rounded shadow-sm"
-            required
-          />
-        </div>
-
-        <div>
-          <label className="block mb-1 font-medium">Baptism Date</label>
-          <input
-            type="date"
-            name="baptismDate"
-            value={member.baptismDate?.split('T')[0] || ''}
-            onChange={handleChange}
-            className="w-full p-2 border rounded shadow-sm"
-          />
-        </div>
-
-        <div className="flex items-center">
+        <input
+          type="text"
+          name="fullName"
+          value={form.fullName}
+          onChange={handleChange}
+          className="w-full p-2 border rounded"
+          placeholder="Full Name"
+          required
+        />
+        <input
+          type="date"
+          name="baptismDate"
+          value={form.baptismDate}
+          onChange={handleChange}
+          className="w-full p-2 border rounded"
+        />
+        <input
+          type="date"
+          name="dateOfBirth"
+          value={form.dateOfBirth}
+          onChange={handleChange}
+          className="w-full p-2 border rounded"
+        />
+        <input
+          type="text"
+          name="groups"
+          value={form.groups}
+          onChange={handleChange}
+          className="w-full p-2 border rounded"
+          placeholder="Groups (comma-separated)"
+        />
+        <div className="flex items-center gap-2">
           <input
             type="checkbox"
             name="isMarried"
-            checked={member.matrimony.isMarried}
+            checked={form.isMarried}
             onChange={handleChange}
-            className="mr-2"
           />
-          <label className="font-medium">Married</label>
+          <label className="text-gray-800 dark:text-gray-200">Married</label>
         </div>
-
-        {member.matrimony.isMarried && (
-          <div>
-            <label className="block mb-1 font-medium">Spouse</label>
+        {form.isMarried && (
+          <>
             <select
               name="spouseId"
-              value={member.matrimony.spouseId || ''}
+              value={form.spouseId}
               onChange={handleChange}
-              className="w-full p-2 border rounded shadow-sm"
+              className="w-full p-2 border rounded"
             >
               <option value="">Select Spouse</option>
-              {members
-                .filter((m) => m._id !== id)
-                .map((m) => (
-                  <option key={m._id} value={m._id}>
-                    {m.fullName}
-                  </option>
-                ))}
+              {members.map((m) => (
+                <option key={m._id} value={m._id}>
+                  {m.fullName}
+                </option>
+              ))}
             </select>
-          </div>
+            <input
+              type="date"
+              name="marriageDate"
+              value={form.marriageDate}
+              onChange={handleChange}
+              className="w-full p-2 border rounded"
+            />
+          </>
         )}
-
         <button
           type="submit"
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded transition"
         >
           Save Changes
         </button>

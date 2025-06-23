@@ -16,7 +16,7 @@ const MemberList = () => {
   useEffect(() => {
     const fetchMembers = async () => {
       try {
-        const res = await axios.get('/members'); // Auth header already included
+        const res = await axios.get('/members'); // Token is included from axiosInstance
         setMembers(res.data);
         setLoading(false);
       } catch (err) {
@@ -66,11 +66,13 @@ const MemberList = () => {
       </div>
 
       <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
-        <table className="w-full min-w-[600px] text-sm text-gray-700 dark:text-gray-200">
+        <table className="w-full min-w-[1000px] text-sm text-gray-700 dark:text-gray-200">
           <thead className="bg-gray-100 dark:bg-gray-800 text-left text-xs uppercase text-gray-600 dark:text-gray-400">
             <tr>
               <th className="p-4">Full Name</th>
+              <th className="p-4">Date of Birth</th>
               <th className="p-4">Baptism Date</th>
+              <th className="p-4">Groups</th>
               <th className="p-4">Married</th>
               <th className="p-4">Spouse</th>
               <th className="p-4 text-center">Actions</th>
@@ -79,7 +81,7 @@ const MemberList = () => {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan="5" className="text-center py-6">
+                <td colSpan="7" className="text-center py-6">
                   <span className="animate-pulse text-gray-500 dark:text-gray-400">Loading members...</span>
                 </td>
               </tr>
@@ -88,9 +90,17 @@ const MemberList = () => {
                 <tr key={member._id} className="hover:bg-gray-50 dark:hover:bg-gray-800 transition">
                   <td className="p-4">{member.fullName}</td>
                   <td className="p-4">
+                    {member.dateOfBirth
+                      ? new Date(member.dateOfBirth).toLocaleDateString()
+                      : '—'}
+                  </td>
+                  <td className="p-4">
                     {member.baptismDate
                       ? new Date(member.baptismDate).toLocaleDateString()
                       : '—'}
+                  </td>
+                  <td className="p-4">
+                    {member.groups?.length > 0 ? member.groups.join(', ') : '—'}
                   </td>
                   <td className="p-4">{member.matrimony?.isMarried ? 'Yes' : 'No'}</td>
                   <td className="p-4">
@@ -116,7 +126,7 @@ const MemberList = () => {
               ))
             ) : (
               <tr>
-                <td colSpan="5" className="text-center py-6 text-gray-400 dark:text-gray-500">
+                <td colSpan="7" className="text-center py-6 text-gray-400 dark:text-gray-500">
                   No members found.
                 </td>
               </tr>
