@@ -1,144 +1,126 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
 import axios from '../api/axiosInstance';
+import { useNavigate, useParams } from 'react-router-dom';
 
 const EditMember = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-
   const [form, setForm] = useState({
     fullName: '',
-    baptismDate: '',
     dateOfBirth: '',
-    groups: '',
-    isMarried: false,
-    spouseId: '',
-    marriageDate: '',
+    baptismDate: '',
+    gender: '',
+    matrimony: {
+      isMarried: false,
+      spouseId: '',
+      marriageDate: ''
+    },
+    groups: []
   });
-
   const [members, setMembers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
 
-  // Fetch current member + other members
   useEffect(() => {
     const fetchData = async () => {
-      try {
-        const [memberRes, allMembersRes] = await Promise.all([
-          axios.get(`/members/${id}`),
-          axios.get('/members'),
-        ]);
+      const res = await axios.get(`/members/${id}`);
+      setForm({
+        ...res.data,
+        matrimony: {
+          isMarried: res.data.matrimony?.isMarried || false,
+          spouseId: res.data.matrimony?.spouseId || '',
+          marriageDate: res.data.matrimony?.marriageDate || ''
+        },
+        groups: res.data.groups || []
+      });
 
-        const member = memberRes.data;
-
-        setForm({
-          fullName: member.fullName || '',
-          baptismDate: member.baptismDate?.split('T')[0] || '',
-          dateOfBirth: member.dateOfBirth?.split('T')[0] || '',
-          groups: member.groups ? member.groups.join(', ') : '',
-          isMarried: member.matrimony?.isMarried || false,
-          spouseId: member.matrimony?.spouseId?._id || '',
-          marriageDate: member.matrimony?.marriageDate?.split('T')[0] || '',
-        });
-
-        setMembers(allMembersRes.data.filter((m) => m._id !== id)); // exclude self
-        setLoading(false);
-      } catch (err) {
-        console.error('Error loading data:', err);
-        setError('Failed to load member data');
-        setLoading(false);
-      }
+      const memberRes = await axios.get('/members');
+      setMembers(memberRes.data);
     };
-
     fetchData();
   }, [id]);
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value,
-    }));
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const updatedMember = {
-      fullName: form.fullName,
-      baptismDate: form.baptismDate || null,
-      dateOfBirth: form.dateOfBirth || null,
-      groups: form.groups.split(',').map((g) => g.trim()).filter((g) => g),
-      matrimony: {
-        isMarried: form.isMarried,
-        spouseId: form.isMarried ? form.spouseId : null,
-        marriageDate: form.isMarried ? form.marriageDate || null : null,
-      },
-    };
-
-    try {
-      await axios.put(`/members/${id}`, updatedMember);
-      navigate('/members');
-    } catch (err) {
-      console.error('Error updating member:', err);
-      setError('Failed to update member');
-    }
+    await axios.put(`/members/${id}`, form);
+    navigate('/members');
   };
 
-  if (loading) {
-    return <p className="p-6 text-gray-600 dark:text-gray-300">Loading member...</p>;
-  }
-
   return (
-    <div className="max-w-2xl mx-auto mt-10 p-6 bg-white dark:bg-gray-800 rounded shadow">
-      <h2 className="text-2xl font-bold mb-6 text-gray-800 dark:text-white">Edit Member</h2>
-      {error && <p className="text-red-500 mb-4">{error}</p>}
+    <div className="max-w-xl mx-auto mt-10 p-6 border rounded-lg bg-white shadow-md dark:bg-gray-800">
+      <h2 className="text-2xl font-bold mb-6 dark:text-white">Edit Member</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
         <input
           type="text"
           name="fullName"
-          value={form.fullName}
-          onChange={handleChange}
-          className="w-full p-2 border rounded"
           placeholder="Full Name"
-          required
-        />
-        <input
-          type="date"
-          name="baptismDate"
-          value={form.baptismDate}
+          value={form.fullName}
           onChange={handleChange}
           className="w-full p-2 border rounded"
         />
         <input
           type="date"
           name="dateOfBirth"
-          value={form.dateOfBirth}
+          value={form.dateOfBirth?.slice(0, 10)}
           onChange={handleChange}
           className="w-full p-2 border rounded"
         />
+        <select
+          name="gender"
+          value={form.gender}
+          onChange={handleChange}
+          className="w-full p-2 border rounded"
+        >
+          <option value="">Select Gender</option>
+          <option>Male</option>
+          <option>Female</option>
+          
+        </select>
         <input
-          type="text"
-          name="groups"
-          value={form.groups}
+          type="date"
+          name="baptismDate"
+          value={form.baptismDate?.slice(0, 10)}
           onChange={handleChange}
           className="w-full p-2 border rounded"
-          placeholder="Groups (comma-separated)"
         />
-        <div className="flex items-center gap-2">
+        <textarea
+          className="w-full p-2 border rounded"
+          placeholder="Groups (comma separated)"
+          value={form.groups.join(', ')}
+          onChange={(e) => setForm({ ...form, groups: e.target.value.split(',').map(g => g.trim()) })}
+        />
+        <div className="flex items-center space-x-2">
           <input
             type="checkbox"
-            name="isMarried"
-            checked={form.isMarried}
-            onChange={handleChange}
+            checked={form.matrimony.isMarried}
+            onChange={(e) =>
+              setForm((prev) => ({
+                ...prev,
+                matrimony: {
+                  ...prev.matrimony,
+                  isMarried: e.target.checked
+                }
+              }))
+            }
           />
-          <label className="text-gray-800 dark:text-gray-200">Married</label>
+          <label className="dark:text-white">Married</label>
         </div>
-        {form.isMarried && (
+        {form.matrimony.isMarried && (
           <>
             <select
-              name="spouseId"
-              value={form.spouseId}
-              onChange={handleChange}
+              value={form.matrimony.spouseId}
+              onChange={(e) =>
+                setForm((prev) => ({
+                  ...prev,
+                  matrimony: {
+                    ...prev.matrimony,
+                    spouseId: e.target.value
+                  }
+                }))
+              }
               className="w-full p-2 border rounded"
             >
               <option value="">Select Spouse</option>
@@ -150,16 +132,23 @@ const EditMember = () => {
             </select>
             <input
               type="date"
-              name="marriageDate"
-              value={form.marriageDate}
-              onChange={handleChange}
+              value={form.matrimony.marriageDate?.slice(0, 10)}
+              onChange={(e) =>
+                setForm((prev) => ({
+                  ...prev,
+                  matrimony: {
+                    ...prev.matrimony,
+                    marriageDate: e.target.value
+                  }
+                }))
+              }
               className="w-full p-2 border rounded"
             />
           </>
         )}
         <button
           type="submit"
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded transition"
+          className="w-full bg-green-600 text-white p-2 rounded hover:bg-green-700 transition"
         >
           Save Changes
         </button>
